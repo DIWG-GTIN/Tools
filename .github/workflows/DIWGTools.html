@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<script src="https://kit.fontawesome.com/yourcode.js" crossorigin="anonymous"></script>
+		<title>DIWG Tools / Outils du GTIN</title>
+		
+		<style>
+			
+			body {font-family: helvetica; user-select: none; margin: 0;}
+			h1 {margin: 0; background-color: #154360; color: #FFF; padding: 5px;}
+			h2 {border-bottom: 3px solid #AAA; padding: 5px; margin: 0; background-color: #F5F5F5; color: #333333; }
+			
+			.group {display: flex; flex-direction: row; padding: 20px;}
+			.item {display: inline-block; border: 1px solid #ccc; padding: 20px; width: 100px; margin-right: 20px; border-radius: 10px; background-color: #DDD;display: flex; justify-content: center;align-items: center; flex-direction: column; box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;}
+			.item:hover {cursor: pointer; box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;}
+			.item .icon {display: inline-block; border: 1px solid #ccc; padding: 15px; font-size: 50px; line-height: 50px; border-radius: 10px; background-color: #EEE;}
+			.item .description {display: inline-block; text-align: center; padding-top: 10px; height: 60px; line-height: 20px;}
+			.item:hover .description {font-weight: bold;}
+			.item:hover .icon {background-color: #FFF;}
+			
+			.fileDownload {color: black; text-decoration: none;}
+		</style>
+		</style>
+		
+		<script>
+			
+			function openURL(url) {
+				 window.open(url, '_blank');
+			} 
+				
+			function downloadFile(url) {
+				// Create an anchor element
+				var link = document.createElement("a");
+			  
+				// Set the href attribute to the URL
+				link.href = url;
+			  
+				// Set the "download" attribute to specify the suggested file name
+				link.setAttribute("download", "");
+			  
+				// Simulate a click event on the anchor element
+				document.body.appendChild(link);
+				link.click();
+			  
+				// Clean up
+				document.body.removeChild(link);
+			}	
+			
+		</script>
+		
+		
+	</head>
+	<body>
+		
+		<h1>DIWG Tools / Outils du GTIN</h1>
+		
+		<h2>Work Related Tools</h2>
+		<div class="group">
+		
+			<div class="item" onclick="openURL('file://omega.dce-eir.net/natdfs/CRA/HQ/ABSB/ABSB_H0E/GV3/HID/IPD/SHARE_ALL/DIWG/1_Tools/IPDPeopleFinder/IPDPeopleFinder-e.html')">
+				<span class="icon">🏢</span>
+				<span class="description">Office People Finder</span>
+			</div>
+			
+			<div class="item" onclick="openURL('file://omega.dce-eir.net/natdfs/CRA/HQ/ABSB/ABSB_H0E/GV3/HID/IPD/SHARE_ALL/DIWG/1_Tools/Workplan_Generator/WorkplanGenerator-e.html')">
+				<span class="icon">📆</span>
+				<span class="description">Workplan Generator</span>
+			</div>
+			
+			<div class="item" onclick="openURL('file://omega.dce-eir.net/natdfs/CRA/HQ/ABSB/ABSB_H0E/GV3/HID/IPD/SHARE_ALL/DIWG/1_Tools/linksLibrary/index.html')">
+				<span class="icon">🔗</span>
+				<span class="description">IPD Links Library</span>
+			</div>
+		
+			<div class="item" onclick="openURL('https://122gc.sharepoint.com/sites/IPDToolboxLaBoiteoutilsdelaDPR/SitePages/IPD-Acronyms.aspx')">
+				<span class="icon">🔠</span>
+				<span class="description">CRA Acronym Library</span>
+			</div>
+			
+			<a class="filedownload" href="file://omega.dce-eir.net/natdfs/CRA/HQ/ABSB/ABSB_H0E/GV3/HID/IPD/SHARE_ALL/DIWG/1_Tools/Bobs_Macro/WildCardMacro_v5-e.docm">
+			<div class="item">
+				<span class="icon">🃏</span>
+				<span class="description">Bob's Wildcard Macro (Guides)</span>
+			</div>
+			</a>
+		
+		</div>
+		
+		<h2>Web & Form Tools</h2>
+		<div class="group">
+		
+			<div class="item" onclick="openURL('https://cra-arc.alpha.canada.ca/en/overview/summary')">
+				<span class="icon">🤬</span>
+				<span class="description">Feedback Mechanism Tool</span>
+			</div>
+			
+			<div class="item" onclick="openURL('file://omega.dce-eir.net/natdfs/CRA/HQ/ABSB/ABSB_H0E/GV3/HID/IPD/SHARE_ALL/DIWG/1_Tools/SubwayPattern_Generator/SubwayPattern_Generator-e.html')">
+				<span class="icon">🚝</span>
+				<span class="description">Subway Pattern Generator</span>
+			</div>
+			
+			<div class="item" onclick="openURL('file://omega.dce-eir.net/natdfs/CRA/HQ/ABSB/ABSB_H0E/GV3/HID/IPD/SHARE_ALL/DIWG/1_Tools/Form_Checker/formComparer-e.html')">
+				<span class="icon">📝</span>
+				<span class="description">IPD Form Checker & Comparer</span>
+			</div>
+		
+			<div class="item" onclick="openURL('file://omega.dce-eir.net/natdfs/CRA/HQ/ABSB/ABSB_H0E/GV3/HID/IPD/SHARE_ALL/DIWG/1_Tools/Tab_Fixing_Tool/TabFixingTool-e.html')">
+				<span class="icon">⏭</span>
+				<span class="description">Tab-fixing Tool (for Forms)</span>
+			</div>
+			
+				<div class="item" onclick="openURL('file://omega.dce-eir.net/natdfs/CRA/HQ/ABSB/ABSB_H0E/GV3/HID/IPD/SHARE_ALL/DIWG/1_Tools/SRT_Practice_Tool/SRT_Practice_tool-Eng/SRT_Practice_Tool-e.html')">
+				
+				<span class="icon">♿</span>
+				<span class="description">SRT Practice Tool</span>
+			</div>
+			
+		</div>
+		
+		<h2>IPD Software Configuration (objects, macros, templates)</h2>
+		<div class="group">
+			
+			<div class="item" onclick="openURL('https://122gc.sharepoint.com/sites/IPDToolboxLaBoiteoutilsdelaDPR/SitePages/Setting-up-IPD-Software.aspx')">
+				<span class="icon">🛠️</span>
+				<span class="description">Setting up IPD Software Instructions</span>
+			</div>
+			
+			
+					
+		</div>
+		
+		
+	</body>
+</html>

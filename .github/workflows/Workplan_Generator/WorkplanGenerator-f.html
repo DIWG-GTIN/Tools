@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="fr">
+	
+	<head>
+		<title>Générateur de plan de travail v4.1</title>
+		<meta charset="UTF-8">
+		
+		<style>
+			body {margin: 0; font-family: helvetica; font-size: 15pt; user-select: none;}
+			H1 {background-color: darkblue; margin: 0; color: white; padding: 5px;}
+			H2 {font-family: arial; background-color: #F5F5F5; margin: -10px -10px 20px -10px; padding: 5px 7px; font-size: 110%; box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px; color: #333333; }
+			.section {padding: 10px; border-bottom: 1px solid #EEE; margin: 20px 10px; background-color: #f8fdff;}
+			.startDates{width: 120px; display: inline-block;}
+			.workplanName {width: 200px;}
+			#workplans {margin-top: 20px;}
+			#results {visibility: hidden;}
+			#resultsHeader {visibility: hidden;}
+			#resultsHR {height: 0px; background-color: #EEE;}
+			#results TD {width: 60px; text-align: center;}
+			#langLink {float: right; padding: 5px; background-color: #f8fdff; border: 1px solid #00008B; font-size: 15px;}
+			input[type=checkbox] {width: 20px; height: 20px;} {margin-right: 20px;}
+			.results {padding: 0; border:1px solid grey; margin: 0; font-size: 15pt;}
+			.results TH, .results TD {border:1px solid #AAA; padding: 5px; margin: 5px;}
+			.note {color: red; font-size: 15pt; margin-left: 10px;}
+			label:hover {cursor: pointer; background-color: yellow;}
+			.noBG {background-color: white !important;}
+			
+			.bold3 {height: 3px; background-color: gray;}
+			.dayOfWeek {display: none;}
+		</style>
+		
+		<script language="javascript">
+		
+		// Add or remove milestones here (first value is the name, the second value is the default number of days)
+		let milestonesList = [["Planification et élaboration",28,7], ["Circulation",14,14], ["Révision linguistique",35,7], ["Révision des modifications",7,7], ["Approbation des intervenants",7,14], ["Révision du formatage",14,28]];
+		
+		let days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+		
+		// The list of holidays
+		var holidays = {
+			"2025-01-01": "Jour de l'An",
+			"2025-04-18": "Vendredi saint",
+			"2025-04-21": "Lundi de Pâques",
+			"2025-05-19": "Fête de la Reine",
+			"2025-07-01": "Fête du Canada",
+			"2025-08-04": "Congé civique",
+			"2025-09-01": "Fête du Travail",
+			"2025-09-30": "Journée nationale de la vérité et de la réconciliation",
+			"2025-10-13": "Action de grâce",
+			"2025-11-11": "Jour du Souvenir",
+			"2025-12-25": "Noël",
+			"2025-12-26": "Lendemain de Noël",
+			"2026-01-01": "Jour de l'An",
+			"2026-04-03": "Vendredi saint",
+			"2026-04-06": "Lundi de Pâques",
+			"2026-05-18": "Fête de la Reine",
+			"2026-07-01": "Fête du Canada",
+			"2026-08-03": "Congé civique",
+			"2026-09-07": "Fête du Travail",
+			"2026-09-30": "Journée nationale de la vérité et de la réconciliation",
+			"2026-10-12": "Action de grâce",
+			"2026-11-11": "Jour du Souvenir",
+			"2026-12-25": "Noël",
+			"2026-12-26": "Lendemain de Noël"
+
+		};
+		
+		let maxWorkplans = 20;
+		let maxVacations = 5;
+		let errors = "";
+		let failSafe = 365;
+		
+		function setupForm() {
+
+			// Populate the no. of workplan and vacations drop down list
+			createNoOfWorkplans();
+			createNoOfVacations();
+			
+			// load default values (not for milestones)
+			loadDefaultValues();
+			
+			// Populate the milestones options
+			createMilestones();
+						
+			// Run the createWorkPlans function
+			createWorkplans(1);
+						
+		}
+		
+		function createNoOfWorkplans() {
+			// Populate the drop down list
+			let list = document.getElementById('noProducts');
+			let listHTML = "";
+			
+			for(let i = 1; i <= maxWorkplans; i++) {
+				listHTML += '<option value="' + i + '">' + i + '</option>';
+			}
+			
+			list.innerHTML = listHTML;		
+		}
+		
+		function createNoOfVacations() {
+			// Populate the drop down list
+			let list = document.getElementById('noVacations');
+			let listHTML = '<option value="0" selected>0</option>';
+			
+			for(let i = 1; i <= maxVacations; i++) {
+				listHTML += '<option value="' + i + '">' + i + '</option>';
+			}
+			
+			list.innerHTML = listHTML;		
+		}
+		
+		function loadDefaultValues() {
+		
+			// Set Holiday settings
+			document.getElementById("h_0").checked = false;
+			document.getElementById("h_1").checked = true;
+			
+			// Set acceptable From days
+			document.getElementById("f_1").checked = false;
+			document.getElementById("f_2").checked = false;
+			document.getElementById("f_3").checked = false;
+			document.getElementById("f_4").checked = false;
+			document.getElementById("f_5").checked = false;
+			document.getElementById("f_all").checked = true;
+			
+			// Set acceptable To days
+			document.getElementById("t_1").checked = false;
+			document.getElementById("t_2").checked = false;
+			document.getElementById("t_3").checked = false;
+			document.getElementById("t_4").checked = false;
+			document.getElementById("t_5").checked = false;
+			document.getElementById("t_all").checked = true;
+		}
+		
+		function createMilestones(){
+			// Populate the Milestone options
+			let milestonesHTML = "<tr><th>Nom</th><th>Jours minimum</th><th>Jours<br>supplémentaires<br>entre les étapes</th><th>Inclure</th></tr>";
+			let milestones = document.getElementById('milestones');
+			
+			for(let x = 0; x < milestonesList.length; x++){
+				milestonesHTML += '<tr><td>'+milestonesList[x][0]+'</td><td><input type="number" id="milestoneDays'+x+'" value="'+milestonesList[x][1]+'"></td><td><input type="number" id="milestoneExtra'+x+'" value="'+milestonesList[x][2]+'"></td><td><input type="checkbox" id="milestoneInclude'+x+'" checked></td></tr>';
+			}
+			
+			milestones.innerHTML = milestonesHTML;
+		}
+		
+		function createWorkplans(num) {
+
+			// Turn off the results
+			document.getElementById('results').style.visibility = 'hidden';
+			document.getElementById('resultsHeader').style.visibility = 'hidden';
+
+			let HTML = "<tr><th>N°</th><th>Nom du plan de travail</th><th>Date de début</th><th>Date de publication</th></tr>";
+			let workplans = document.getElementById('workplans');
+				
+			for(let i = 1; i <= num; i++) {
+				HTML += '<tr><td>'+i+'</td><td><input class="workplanName" placeholder="Facultatif" id="name'+i+'" type="text" maxlength="20"></td><td><input id="start'+i+'" type="date" onchange="clearOtherDate(\'end'+i+'\')"></td><td><input id="end'+i+'" type="date" onchange="clearOtherDate(\'start'+i+'\')"></td></tr>';
+			}
+			
+			workplans.innerHTML = HTML;
+			
+		}
+		
+		function createVacations(num) {
+
+			let HTML = "<tr><th>N°</th><th>Date de début</th><th>Date de publication</th></tr>";
+			let vacations = document.getElementById('vacations');
+				
+			for(let i = 1; i <= num; i++) {
+				HTML += '<tr><td>'+i+'</td><td><input id="vacationStart'+i+'" type="date"></td><td><input id="vacationEnd'+i+'" type="date"></td></tr>';
+			}
+			
+			if (num == 0) {
+				vacations.innerHTML = "";
+			} else { 
+				vacations.innerHTML = HTML;
+			}
+			
+		}
+		
+		function clearOtherDate(id) {
+			document.getElementById(id).value = null;
+		}
+		
+		function start() {
+			
+			// Clear errors
+			errors = "";
+			
+			// Turn off the results
+			document.getElementById('results').style.visibility = 'hidden';
+			document.getElementById('resultsHeader').style.visibility = 'hidden';
+			
+			// Check various values for errors
+			checkMilestones();
+			checkWorkplans();
+			checkVacations();
+			
+			// Show errors if there are some, and quit
+			if(errors != "") {
+				alert("Les erreurs suivantes ont été trouvées: \n\n"+errors);
+				return false;
+			}
+			
+			let resultsHTML = "";
+			
+			// If no errors, start calculating
+			for(let i = 1; i <= document.getElementById('noProducts').value; i++) {
+			
+				if(document.getElementById('start'+i).value != '') {
+					resultsHTML += calculateDatesFromStart(i);
+				} else if (document.getElementById('end'+i).value != '') {
+					resultsHTML += calculateDatesFromEnd(i);
+				}
+			}
+			
+			// Add headers to the results
+			resultsHTML = generateResultHeaders() + resultsHTML;
+			
+			// Place results in the body of the file
+			document.getElementById("results").innerHTML = resultsHTML;
+			
+			// Show Results;
+			document.getElementById('results').style.visibility = 'visible';
+			document.getElementById('resultsHeader').style.visibility = 'visible';
+		}
+		
+		function checkMilestones() {
+			
+			let atleastOneMilestone = false;
+			let days = 0;
+			
+			// Check milestones
+			for(let i = 0; i < milestonesList.length; i++) {
+				// Check if the milestone has been selected
+				if(document.getElementById('milestoneInclude'+i).checked === true) {
+				
+					// A milestone was found
+					atleastOneMilestone = true;
+					
+					days = document.getElementById('milestoneDays'+i).value
+					extra = document.getElementById('milestoneExtra'+i).value
+					
+					// Check if the milestone has a set number of days (between 1 and 365)
+					if (days == "") {
+						errors += "- La valeur « Jours minimum » pour l’étape '"+milestonesList[i]+"' doit être définie.\n";
+					} else if(isNaN(days) === true) {
+						errors += "- La valeur « Jours minimum » pour l’étape '"+milestonesList[i]+"' doit être un nombre.\n";
+					} else if ( days < 1) {
+						errors += "- La valeur « Jours minimum » pour l’étape '"+milestonesList[i]+"' doit être supérieure à 0.\n";
+					} else if ( days > 365) {
+						errors += "- La valeur « Jours minimum » pour l’étape '"+milestonesList[i]+"' doit être inférieure ou égale à 365.\n";
+					}
+					
+					// Check if the milestone has a set number of days (between 1 and 28)
+					if (extra == "") {
+						// Do nothing
+					} else if(isNaN(extra) === true) {
+						errors += "- La valeur « Jours supplémentaires » pour l’étape '"+milestonesList[i]+"' doit être un nombre.\n";
+					} else if ( extra < 1) {
+						errors += "- La valeur « Jours supplémentaires » pour l’étape '"+milestonesList[i]+"' doit être supérieure à 0.\n";
+					} else if ( extra > 365) {
+						errors += "- La valeur « Jours supplémentaires » pour l’étape '"+milestonesList[i]+"' doit être inférieure ou égale à 365.\n";
+					}
+					
+				}
+			}
+			
+			if (atleastOneMilestone === false) {
+				errors += "- Aucune étape n’a été sélectionnée. Sélectionnez au moins une étape avant d’exécuter cet outil.\n";
+			}
+		
+		}
+		
+		function checkWorkplans() {
+			
+			let start = "";
+			let end = "";
+			totalWorkplans = document.getElementById('noProducts').value;
+			
+			for(let i = 1; i <= totalWorkplans; i++){
+				
+				start = document.getElementById('start'+i).value;
+				end = document.getElementById('end'+i).value;
+				
+				// Check if workplan has been set
+				if(start == "" && end == "") {
+					errors += "- Le plan de travail n° "+i+" doit avoir soit une date de début, soit une date de fin.\n";
+				} else if (start !== "" && Date.parse(start) === false) {
+					errors += "- La date de début du plan de travail n° "+i+" est invalide.\n";
+				} else if (end !== "" && Date.parse(end) === false) {
+					errors += "- La date de fin du plan de travail n° "+i+" est invalide.\n";
+				}		
+				
+			}
+		
+		
+		}
+		
+		function checkVacations() {
+			
+			let start = "";
+			let end = "";
+			totalVacations = document.getElementById('noVacations').value;
+			
+			// Quit if there are no vacations
+			if (totalVacations == 0) { return; }
+			
+			for(let i = 1; i <= totalVacations; i++){
+				
+				start = document.getElementById('vacationStart'+i).value;
+				end = document.getElementById('vacationEnd'+i).value;
+				
+				// Check if workplan has been set
+				if(start == "" || end == "") {
+					errors += "- Les vacances n°"+i+" doivent avoir une date de début et une date de fin.\n";
+				} else if (start !== "" && Date.parse(start) === false) {
+					errors += "- La date de début des vacances n°"+i+" est invalide.\n";
+				} else if (end !== "" && Date.parse(end) === false) {
+					errors += "- La date de fin des vacances n°"+i+" est invalide.\n";
+				} else if (Date.parse(start) > Date.parse(end)) {
+					errors += "- Les dates des vacances n°"+i+" ne sont pas cohérentes (la date de début est postérieure à la date de fin).\n";
+				}
+				
+			}
+				
+		}
+		
+		function generateResultHeaders() {
+			
+			let HTML = "<tr><th>Nom</th>";
+			
+			// Go through each milestone
+			for(let i = 0; i < milestonesList.length; i++) {
+				if(document.getElementById('milestoneInclude'+i).checked === true) {
+					HTML += "<th>" + milestonesList[i][0] + " (début)</th><th>" + milestonesList[i][0] + " (fin)</th>";
+				}
+			}	
+		
+			// Add last 
+			HTML += "<th>Date de<br>publication</th><th>Nombre total de jours</th></tr>";
+			
+			return HTML;
+		}
+		
+		function calculateDatesFromStart(workplanNo) {
+			
+			let milestoneDays = 0;
+			let milestoneExtra = 0;
+			let currentDate = getDateFromPage('start'+workplanNo);
+			let HTML = "<tr>";
+			let firstMilestone = true;
+			let dateIsValid;
+			
+			// used to calculate total days
+			let firstDay, lastDay, totalDays;
+			
+			// First add the name of the product
+			HTML += '<td>'+document.getElementById('name'+workplanNo).value+'</td>';
+			
+			// Go through every Checked milestone
+			for(let i = 0; i < milestonesList.length; i++) {
+				
+				// Skip if this milestone is not checked
+				if(document.getElementById('milestoneInclude'+i).checked === false) { continue; }
+				
+				// *** Check the FROM date ***/
+				dateIsValid = checkDate(currentDate, "f_");
+				
+				let count = 0; // temporary fail safe
+				
+				// Keep adding a day until a valid value is found
+				while(dateIsValid === false) {
+				
+					// Add one day to date
+					currentDate.setDate(currentDate.getDate() + 1);
+					
+					// Check again
+					dateIsValid = checkDate(currentDate, "f_");
+				
+					if (count == failSafe) { dateIsValid = true; } // Temporary fail safe
+					count++
+				}
+				
+				// Save the first day for the eventual total days count at the end 
+				if(firstDay == null) { 
+					firstDay = new Date(currentDate.getTime());
+				}
+				
+				// A valid date has been found, add it to the report
+				HTML += "<td>"+currentDate.getFormatedDate()+"<span class=\"dayOfWeek\">"+days[currentDate.getDay()]+"</span></td>";
+								
+				// *** Generate a TO date ***/
+				
+				// Get required values
+				milestoneDays = parseInt(document.getElementById('milestoneDays'+i).value);
+				
+				// Add one day to date
+				currentDate.setDate(currentDate.getDate() + milestoneDays);
+				
+				// Check the TO date
+				dateIsValid = checkDate(currentDate, "t_");
+				
+				count = 0; // Temporary fail safe
+				// Keep adding a day until a valid value is found
+				while(dateIsValid === false) {
+				
+					// Add one day to date
+					currentDate.setDate(currentDate.getDate() + 1);
+					
+					// Check again
+					dateIsValid = checkDate(currentDate, "t_");
+				
+					if (count == failSafe) { dateIsValid = true; } // Temporary fail safe
+					count++
+				}
+				
+				// A valid date has been found, add it to the report
+				HTML += "<td>"+currentDate.getFormatedDate()+"<span class=\"dayOfWeek\">"+days[currentDate.getDay()]+"</span></td>";
+				
+				// *** Generate the next start date ***/
+				// Add extra days if there are some
+				milestoneExtra = document.getElementById('milestoneExtra'+i).value;
+				if(milestoneExtra != "") {
+					// Get required values
+					milestoneExtra = parseInt(milestoneExtra);
+					currentDate.setDate(currentDate.getDate() + milestoneExtra);
+				}
+				
+			}
+			
+			// *** Generate the publishing date ***/
+			// Check the FROM date
+			dateIsValid = checkDate(currentDate, "f_");
+
+			count = 0; // Temporary fail safe
+			// Keep adding a day until a valid value is found
+			while(dateIsValid === false) {
+			
+				// Add one day to date
+				currentDate.setDate(currentDate.getDate() + 1);
+				
+				// Check again
+				dateIsValid = checkDate(currentDate, "f_");
+				
+				if (count == failSafe) { dateIsValid = true; } // Temporary fail safe
+				count++
+			}
+			
+			// Save last day for total Days count
+			lastDay = new Date(currentDate.getTime());
+			
+			// A valid date has been found, add it to the report
+			HTML += "<td>"+currentDate.getFormatedDate()+"<span class=\"dayOfWeek\">"+days[currentDate.getDay()]+"</span></td>";
+		
+			// *** Calculate total days ***/
+			
+			// Calculate total days
+			totalDays = lastDay.getTime() - firstDay.getTime();
+			totalDays = Math.ceil(totalDays / (1000 * 3600 * 24));
+		
+			// Add total days
+			HTML += "<td>"+ totalDays +"</td></tr>";		
+			
+			// Return the final results
+			return HTML;
+		}
+		
+		function calculateDatesFromEnd(workplanNo){
+			
+			let milestoneDays = 0;
+			let milestoneExtra = 0;
+			let currentDate = getDateFromPage('end'+workplanNo);
+			let HTML = "";
+			let firstMilestone = true;
+			let dateIsValid;
+		
+			// used to calculate total days
+			let firstDay, lastDay, totalDays;
+		
+			// *** STEP 1 - GENERATE A VALID PUBLISHING DATE *** //
+			// Check the FROM date
+			dateIsValid = checkDate(currentDate, "f_");
+
+			count = 0; // Temporary fail safe
+			// Keep **adding** a day until a valid value is found (I'm adding here, since that seems more logical, despite the rest of the funciton subtracting days)
+			while(dateIsValid === false) {
+			
+				// Add one day to date
+				currentDate.setDate(currentDate.getDate() + 1);
+				
+				// Check again
+				dateIsValid = checkDate(currentDate, "f_");
+				
+				if (count == failSafe) { dateIsValid = true; } // Temporary fail safe
+				count++
+				
+			}
+			
+			// Save the last day for the eventual total days count at the end 
+			if(lastDay == null) { 
+				lastDay = new Date(currentDate.getTime());
+			}
+			
+			// A valid date has been found, add it to the report
+			HTML = "<td>"+currentDate.getFormatedDate()+"<span class=\"dayOfWeek\">"+days[currentDate.getDay()]+"</span></td>" + HTML;
+			
+			// *** STEP 2 - GO BACKWARDS THROUGH MILESTONES *** //
+			// Go through every Checked milestone
+			for(let i = (milestonesList.length-1); i >= 0 ; i--) {
+				
+				// Skip if this milestone is not checked
+				if(document.getElementById('milestoneInclude'+i).checked === false) { continue; }
+				
+				// *** Generate the next TO date ***/
+				
+				// subtract extra days if there are some
+				milestoneExtra = document.getElementById('milestoneExtra'+i).value;
+				if(milestoneExtra != "") {
+					// Get required values
+					milestoneExtra = parseInt(milestoneExtra);
+					currentDate.setDate(currentDate.getDate() - milestoneExtra);
+				}
+								
+				// *** Check the TO date ***/
+				dateIsValid = checkDate(currentDate, "t_");
+				
+				let count = 0; // Fail safe
+				
+				// Keep subtracking a day until a valid value is found
+				while(dateIsValid === false) {
+				
+					// Add one day to date
+					currentDate.setDate(currentDate.getDate() - 1);
+					
+					// Check again
+					dateIsValid = checkDate(currentDate, "t_");
+				
+					if (count == failSafe) { dateIsValid = true; } // Temporary fail safe
+					count++
+				}
+
+				// A valid date has been found, add it to the report
+				HTML = "<td>"+currentDate.getFormatedDate()+"<span class=\"dayOfWeek\">"+days[currentDate.getDay()]+"</span></td>" + HTML;
+				
+				// *** Generate a FROM date ***/
+				
+				// Get required values
+				milestoneDays = parseInt(document.getElementById('milestoneDays'+i).value);
+				
+				// Add one day to date
+				currentDate.setDate(currentDate.getDate() - milestoneDays);
+				
+				// Check the TO date
+				dateIsValid = checkDate(currentDate, "f_");
+				
+				count = 0; // Temporary fail safe
+				// Keep adding a day until a valid value is found
+				while(dateIsValid === false) {
+				
+					// Add one day to date
+					currentDate.setDate(currentDate.getDate() - 1);
+					
+					// Check again
+					dateIsValid = checkDate(currentDate, "f_");
+				
+					if (count == failSafe) { dateIsValid = true; } // Temporary fail safe
+					count++
+				}
+				
+				// update the first date for total days calc
+				firstDay = new Date(currentDate.getTime());
+				
+				// A valid date has been found, add it to the report
+				HTML = "<td>"+currentDate.getFormatedDate()+"<span class=\"dayOfWeek\">"+days[currentDate.getDay()]+"</span>" + HTML;
+								
+			}
+		
+			// First add the name of the product then close the row
+			HTML = '<tr><td>'+document.getElementById('name'+workplanNo).value+'</td>' + HTML;
+		
+			// *** Calculate total days ***/
+			
+			// Calculate total days
+			totalDays = lastDay.getTime() - firstDay.getTime();
+			totalDays = Math.ceil(totalDays / (1000 * 3600 * 24));
+
+			// Add total days
+			HTML += "<td>"+ totalDays +"</td></tr>";
+			
+			// Return the final results
+			return HTML;
+		
+		}
+		
+		function checkDate(date, type) {
+		
+			// *** Check if it's a holiday ***/
+			if (document.getElementById("h_1").checked === true) {
+				if ((date.getFormatedDate(false) in holidays)) {
+					return false;
+				}	
+			}
+
+			// *** Check if it's in a vacation ***/
+			let noVacations = document.getElementById("noVacations").value;
+			if(noVacations != 0) {
+			
+				let vacationStartDate; 
+				let vacationEndDate;
+				
+				// Go through each vacation
+				for(let i = 1; i <= noVacations; i++) { 
+					// Get vacation start date
+					vacationStartDate = getDateFromPage('vacationStart'+i);
+					vacationEndDate = getDateFromPage('vacationEnd'+i);
+					
+					// Check if date falls within vacation
+					if(date >= vacationStartDate && date <= vacationEndDate) {
+						return false;
+					}
+					
+				} 		
+			
+			}
+						
+			// *** Check if it's a valid day ***/
+			
+			// Get the number day
+			let dayOfWeek = date.getDay();
+			
+			// if Sunday or Saturday, automatically fail
+			if (dayOfWeek == 0 || dayOfWeek == 6) {
+				return false
+			}
+			
+			// Check if "all" is checked
+			if(document.getElementById(type + "all").checked == true) {
+				return true;	
+			}
+			
+			// Check if the day has been checked
+			if(document.getElementById(type + dayOfWeek).checked == true) {
+				return true;	
+			} else {
+				return false;
+			}
+		
+		}
+		
+		function setAcceptableDays(group, isAll = false) {
+			
+			// Get all of the days values
+			let days = [];
+			
+			days[0] = document.getElementById(group + '1');
+			days[1] = document.getElementById(group + '2');
+			days[2] = document.getElementById(group + '3');
+			days[3] = document.getElementById(group + '4');
+			days[4] = document.getElementById(group + '5');
+			days[5] = document.getElementById(group + 'all');
+			
+			// Check if all the days are checked
+			let allChecked = true;
+			let allUnchecked = true;
+			for(let i = 0; i < 5; i++) {
+				if(days[i].checked === false) {
+					allChecked = false;
+				} else {
+					allUnchecked = false;
+				}
+			}
+			
+			// If all days are unchecked, then make sure All is checked
+			if(allUnchecked === true) { 
+				days[5].checked = true;
+				return;
+			}
+			
+			// If all days are checked, uncheck them all and select "all"
+			if(allChecked === true && isAll === false) {
+				days[5].checked = true; 
+				for(let i = 0; i < 5; i++) {
+					days[i].checked = false;
+				}
+				return;
+			}
+			
+			// If 'all' is checked then unselect all the days
+			if(days[5].checked === true && isAll === true) {
+				for(let i = 0; i < 5; i++) {
+					days[i].checked = false;
+				}
+				return;
+			}
+			
+			// a day is checked and not all are checked, make sure the all is unchecked
+			if(isAll === false && allChecked === false) {
+				days[5].checked = false;
+				return;
+			}
+					
+		} 
+		
+		function setHolidays(setting) {
+			
+			if(setting == 0){
+				document.getElementById("h_0").checked = true;
+				document.getElementById("h_1").checked = false;
+			} else if(setting == 1) {
+				document.getElementById("h_0").checked = false;
+				document.getElementById("h_1").checked = true;
+			}
+					
+		} 
+		
+		function showHolidays() {
+			
+			let text = "Jours fériés reconnu par l'ARC : \n"
+			let currentGroup = "2000";
+			
+			
+			for(holiday in holidays) {
+				
+				if(holiday.substring(0,4) != currentGroup) {
+					text += "\nYear " + holiday.substring(0,4) + "\n";
+					currentGroup = holiday.substring(0,4)
+				}
+			
+				text += holiday + ": " + holidays[holiday] + "\n";
+			} 
+			
+			alert(text);
+			
+		}
+		
+		function getDateFromPage(id) {
+			// Get the date as string
+			let stringDate = document.getElementById(id).value;
+			
+			// Create a date object to start the process
+			var newDate = new Date(stringDate);
+
+			// Make sure the date is correctly captured (bug?)
+			newDate.checkDate(stringDate);
+			
+			// Return the date
+			return newDate;
+		}
+		
+		function showDayOfweek() {
+			let box = document.getElementById("showDay");
+			let daysOfweek = document.getElementsByClassName("dayOfWeek");
+			
+			// Turn days on or off, depending if box is checked
+			if(box.checked === true) {
+				
+				for (var i=0, len=daysOfweek.length|0; i<len; i=i+1|0) {
+					daysOfweek[i].style.display = "block";
+				} 
+				
+			} else { 
+				
+				for (var i=0, len=daysOfweek.length|0; i<len; i=i+1|0) {
+					daysOfweek[i].style.display = "none";
+				} 
+				
+			} 		
+		}
+		
+		// Solves and issue where the date doesn't set properly
+		Date.prototype.checkDate = function(date) {
+			
+			// Get the day of the date (to compare later)
+			let day = parseInt(date.slice(-2));
+			let currentDay = this.getDate();
+
+			// If the day is different add a day
+			if(currentDay != day) {
+				if(currentDay > day) { 
+					this.setDate(this.getDate() + 1);
+				} else { 
+					this.setDate(this.getDate() + (day - currentDay));
+				}
+			}
+			
+		}
+
+		Date.prototype.getFormatedDate = function(HTML = true) {
+			
+			if(HTML === true) {
+				return this.getFullYear() + "&#8209;" + ('0' + (this.getMonth()+1)).slice(-2) + "&#8209;" + ('0' + this.getDate()).slice(-2);
+			} else {
+				return this.getFullYear() + "-" + ('0' + (this.getMonth()+1)).slice(-2) + "-" + ('0' + this.getDate()).slice(-2);
+			}
+		}
+		
+		</script>
+		
+	</head>
+	
+	
+	<body onload="setupForm()">
+		
+		<h1>Générateur de plan de travail v4.1 (2025) <a id="langLink" href="WorkplanGenerator-e.html">English</a></h1>
+		
+		<div class="section">
+			<h2 id="workplansHeader">1. Entrez l'information sur les étapes</h2>
+			<!--<h2>Milestone Info</h2>-->
+			<table id="milestones">
+				<!-- Insert milestone options here -->
+			</table>
+		</div>	
+			
+		<div class="section">
+			<h2>2. Faite une sélection pour les journées fériées</h2>
+			<label for="h_0">Peut tomber sur une journée fériée (rien faire)</label>
+			<input type="checkbox" id="h_0" onchange="setHolidays(0)">
+			<label for="h_1">Ne peut pas tomber sur une journée fériée (passer au prochain jour)</label>
+			<input type="checkbox" id="h_1" checked onchange="setHolidays(1)">
+			<input type="button" style="font-size: 15pt" value="Cliquez ici pour afficher les journées fériées" onclick="showHolidays()">
+		</div>
+		
+		<div class="section">
+			<h2>3. Entrez vos vacances ou absences personnelles</h2>
+			<label for="noVacations" class="startDates">Nombre de vacances</label>
+			<select id="noVacations" style="font-size: 15pt" onchange="createVacations(this.value)"></select>
+			<table id="vacations"></table>
+		</div>
+		
+		<div class="section">
+			<h2>4. Choisissez une journée « à parti de » acceptable</h2>
+			<label for="f_1">Lundi</label>
+			<input type="checkbox" id="f_1" onchange="setAcceptableDays('f_')">
+			<label for="f_2">Mardi</label>
+			<input type="checkbox" id="f_2" onchange="setAcceptableDays('f_')">
+			<label for="f_3">Mercredi</label>
+			<input type="checkbox" id="f_3" onchange="setAcceptableDays('f_')">
+			<label for="f_4">Jeudi</label>
+			<input type="checkbox" id="f_4" onchange="setAcceptableDays('f_')">
+			<label for="f_5">Vendredi</label>
+			<input type="checkbox" id="f_5" onchange="setAcceptableDays('f_')">
+			<label for="f_all">Toutes</label> 
+			<input type="checkbox" id="f_all" checked onchange="setAcceptableDays('f_', true)">
+		</div>
+		
+		<div class="section">
+			<h2>5. Choisissez une journée « jusqu'à » acceptable</h2>
+			<label for="t_1">Lundi</label>
+			<input type="checkbox" id="t_1" onchange="setAcceptableDays('t_')">
+			<label for="t_2">Mardi</label>
+			<input type="checkbox" id="t_2" onchange="setAcceptableDays('t_')">
+			<label for="t_3">Mercredi</label>
+			<input type="checkbox" id="t_3" onchange="setAcceptableDays('t_')">
+			<label for="t_4">Jeudi</label>
+			<input type="checkbox" id="t_4" onchange="setAcceptableDays('t_')">
+			<label for="t_5">Vendredi</label>
+			<input type="checkbox" id="t_5" onchange="setAcceptableDays('t_')">
+			<label for="t_all">Toutes</label> 
+			<input type="checkbox" id="t_all" checked onchange="setAcceptableDays('t_', true)">
+		</div>
+		
+		<div class="section">
+			<h2 id="workplansHeader">6. Ajoutez l'information sur les plans de travail</h2>
+			<label for="noProducts" class="startDates">Nombre de plan de travail</label>
+			<select id="noProducts" style="font-size: 15pt" onchange="createWorkplans(this.value)"></select>
+			<span class="note">Remarque : Modifier ceci réinitialisera vos plans de travail ci-dessous.</span>
+			<table id="workplans"></table>
+		</div>
+		
+		<div class="section">
+			<h2>Commandes</h2>
+			<input type="button" style="font-size: 15pt" value="Cliquez ici pour créer les plans de travail" onclick="start()">
+			<label for="showDay">Afficher les journées de la semaine</label>
+			<input type="checkbox" id="showDay" onClick="showDayOfweek()">
+		</div>
+
+		<div class="section noBG">
+			<h2 id="resultsHeader">Résultats</h2>
+			<table id="results" style="font-size: 15pt" class="results"></table>
+		</div>
+		
+		
+	</body>
+</html>
