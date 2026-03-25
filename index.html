@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPD - AI Prompt Generator v1.437</title>
+	
+	<link rel="stylesheet" href="css/stylesheet.css">
+</head>
+
+<body>
+
+    <div class="header">
+        <h1 data-translate="appTitle">IPD - AI Prompt Generator v1.437</h1>
+        <div class="header-actions">
+			<select onchange="window.craApp.openWebpage(this)" class="chatBotDropDown">
+				<option value="">Select an AI Chatbot</option>
+				<option value="https://m365.cloud.microsoft/chat/">CoPilot (Microsoft)</option>
+				<option value="https://genni-gjgp-genniplt-prd.apps.aro01.prd.ocp.az.cldsvcs.net/">CRA's GENNI (Paid License)</option>	
+				<option value="https://canchat.pilot-pilote.dsai-sdia.ssc-spc.cloud-nuage.canada.ca/">SSC's CANChat</option>	
+				<option value="https://radia.vrd-drv.crc.ca/">Innovation Canada's Radia AI</option>	
+				<option value="https://chatgpt.com/">ChatGPT (OpenAI)</option>
+				<option value="https://grok.com/">Grok (xAI)</option>				
+				<option value="https://gemini.google.com/">Gemini (Google)</option>				
+			    <option value="https://www.meta.ai/">Meta.AI (Meta/Facebook)</option>				
+				<option value="https://www.perplexity.ai/">Perplexity (Perplexity AI)</option>				
+				<option value="https://chat.mistral.ai/chat">Le Chat (Mistral AI)</option>				
+				<option value="https://claude.ai/">Claude (Anthropic)</option>		
+			</select>
+            <a href="javascript:void(0)" class="language-toggle" data-translate="toggle" onclick="window.language.toggleLanguage()">Français</a>
+        </div>
+    </div>
+
+    <div class="container">
+       
+	   <!-- Categories Section -->
+        <div class="section top-section">
+            <div class="section-header" data-translate="category">Category</div>
+            <div class="section-content">
+                <div class="category-grid">
+                    <div class="category-card" onclick="window.categories.loadCategory('email', event)">
+                        <span class="category-icon">📧</span>
+                        <div class="category-name" data-translate="emailLetters">Email & Text</div>
+                    </div>
+					
+					  <div class="category-card" onclick="window.categories.loadCategory('access', event)">
+                        <span class="category-icon">♿</span>
+                        <div class="category-name" data-translate="accessibility">Accessibility</div>
+                    </div>
+					
+										
+                    <div class="category-card" onclick="window.categories.loadCategory('forms', event)">
+                        <span class="category-icon">📄</span>
+                        <div class="category-name" data-translate="forms">Forms</div>
+                    </div>
+					<div class="category-card" onclick="window.categories.loadCategory('guides', event)">
+                        <span class="category-icon">📖</span>
+                        <div class="category-name" data-translate="guides">Guides</div>
+                    </div>
+                    <div class="category-card" onclick="window.categories.loadCategory('web', event)">
+                        <span class="category-icon">🌐</span>
+                        <div class="category-name" data-translate="webContent">Web Content</div>
+                    </div>
+                   
+                    <div class="category-card" onclick="window.categories.loadCategory('translate', event)">
+                        <span class="category-icon">🌍</span>
+                        <div class="category-name" data-translate="translation">Translation</div>
+                    </div>
+					
+                    <div class="category-card" onclick="window.categories.loadCategory('analysis', event)">
+                        <span class="category-icon">📊</span>
+                        <div class="category-name" data-translate="analysis">Analysis</div>
+                    </div>
+					
+					 <div class="category-card" onclick="window.categories.loadCategory('system', event)">
+                        <span class="category-icon">⚙️</span>
+                        <div class="category-name" data-translate="system">System</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Section -->
+        <div class="section hidden" id="taskWindow">
+            <div class="section-header" data-translate="tasks">Tasks</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <label for="taskSelect" data-translate="selectTaskLabel">Select a task:</label>
+                    <select id="taskSelect" onchange="window.categories.loadTask(this.value)">
+                        <option value="" data-translate="selectTask" disabled selected>-- Choose a task --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="section hidden" id="settingWindow">
+            <div class="section-header" data-translate="settings">Settings</div>
+            <div class="section-content" id="settings"></div>
+			
+			<div class="section-content">
+				<button class="btn btn-primary" onclick="window.categories.generatePrompt()" data-translate="generatePromptBtn">Generate Prompt</button>
+			</div>
+		</div>
+
+        <!-- Generated Prompt Section -->
+        <div id="promptSection" class="section hidden">
+            <div class="section-header" data-translate="generatedPrompt">Generated Prompt</div>
+            <div class="section-content">
+                <div class="form-group">
+                    <textarea id="promptTextArea" readonly style="min-height: 300px;"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="window.craApp.copyToClipboard()" data-translate="copy">📋 Copy to Clipboard</button>
+                <button class="btn btn-secondary" onclick="window.craApp.saveToFile()" data-translate="save">💾 Save to File</button>
+                <button class="btn btn-success" onclick="window.craApp.addToLibrary()" data-translate="addToLibrary">➕ Add to Library</button>
+                <button class="btn btn-secondary" onclick="window.craApp.generateShareableLink()">🔗 Get Shareable Link</button>
+                <button class="btn btn-secondary" onclick="window.craApp.openFeedbackModal()" data-translate="feedback">💬 Send Feedback</button>
+            </div>
+        </div>
+    </div>
+   
+	<!-- Nofications -->
+    <div class="notification" id="notification">Copied to clipboard!</div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <span data-translate="footerText">This tool is brought to you by the</span> <a href="mailto:cesistrategicinitiatives-ceisinitiativesstrategiques@cra-arc.gc.ca"><strong data-translate="footerOrg">Center of Expertise and Strategic Initiatives</strong></a>
+		<p id="taskCode" style="display: none;"></p> 
+	</div>
+
+	
+	<!-- SCRIPTS --> 
+
+    <script src="js/config.js"></script>
+    <script src="js/language.js"></script>
+    <script src="js/categories.js"></script>
+	
+	<!-- TASKS -->
+	<script src="tasks/accessibility.js"></script>
+	<script src="tasks/analysis.js"></script>
+	<script src="tasks/email.js"></script>
+	<script src="tasks/forms.js"></script>
+	<script src="tasks/guides.js"></script>
+	<script src="tasks/system.js"></script>
+	<script src="tasks/translation.js"></script>
+	<script src="tasks/web.js"></script>
+	
+		
+	
+<script>
+
+// app.js - CRA AI Prompt Generator Main Application
+
+window.craApp = {
+    
+    // Copy to clipboard
+    copyToClipboard: function() {
+        const promptTextArea = document.getElementById('promptTextArea');
+        promptTextArea.select();
+        document.execCommand('copy');
+        this.showNotification('copiedToClipboard');
+    },
+
+    // Show notification
+    showNotification: function(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        const t = window.language.translations[window.craConfig.currentLanguage];
+        
+        // Translate common notification messages
+        const translatedMessage = t[message] || message;
+        
+        notification.textContent = translatedMessage;
+        notification.className = 'notification show';
+        if (type === 'error') notification.classList.add('error');
+        
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    },
+	
+	// Open a webpage in a new tab / window
+	openWebpage: function(select) {
+		var url = select.value;
+		if (url) {
+			window.open(url, '_blank');
+			select.selectedIndex = 0; // reset the dropdown
+		}
+	}
+
+};
+
+
+// Get Prompt from url
+const params = new URLSearchParams(window.location.search); 
+if(params.has('p')) {
+	window.categories.loadParam(params.get('p'));
+}
+if(params.has('pro')) {
+	document.getElementById('taskCode').style.display = "block";
+}
+
+
+    </script>
+</body>
+</html>
